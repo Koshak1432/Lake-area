@@ -1,0 +1,7 @@
+**/cmake-build-*/
+**/.idea/
+**/.clang-format
+*/Google_tests/lib/
+**/.gradle/
+**/build/
+**/gradle/
