@@ -22,7 +22,20 @@ public class Main {
 //        }
         GdalFormater formater = new GdalFormater();
         boolean[] activeBands = new boolean[]{true, false, false, true, false, false, true, false};
-        formater.loadHeader(file);
+//        boolean[] activeBands = new boolean[]{true, true, true};
+        if (!formater.loadHeader(file)) {
+            System.err.println("Couldn't load header");
+            return;
+        }
         Data data = formater.loadData(activeBands);
+
+        ImageConstructor constructor = new ImageConstructor(data.getDataPoints()[0], data.getDataPoints()[2], data.getDataPoints()[1],
+                                                            data.getWidth(), data.getHeight());
+        BufferedImage img = constructor.constructImage();
+        if (img != null) {
+            System.out.println(img);
+            ImageWindow imageWindow = new ImageWindow(img);
+            imageWindow.displayImage();
+        }
     }
 }

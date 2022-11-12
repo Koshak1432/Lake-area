@@ -5,10 +5,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
 
 import org.gdal.gdal.Band;
 import org.gdal.gdal.ColorTable;
@@ -294,12 +291,11 @@ public class GdalFormater {
     }
 
     private boolean[] fillBandsIfNull(boolean[] activeBands) {
-        boolean[] newBands = activeBands;
         if (activeBands == null) {
-            newBands = new boolean[numBands];
-            Arrays.fill(newBands, true);
+            activeBands = new boolean[numBands];
+            Arrays.fill(activeBands, true);
         }
-        return newBands;
+        return activeBands;
     }
 
     private int countActiveNumber(boolean[] activeBands) {
@@ -379,28 +375,24 @@ public class GdalFormater {
     private float[][] loadData_float(boolean[] activeBands, int activeNumber) {
         ByteBuffer[] bands = new ByteBuffer[activeNumber];
 
-        int xsize = poDataset.getRasterXSize();
-        int ysize = poDataset.getRasterYSize();
-        int pixels = xsize * ysize;
-        int buf_type = 0, buf_size = 0;
+        int pixels = width * height;
+        int buf_type = gdalconst.GDT_Float32;    // poBand.getDataType();;
+        int buf_size = pixels * (gdal.GetDataTypeSize(buf_type) / 8);
 
         int band = 0;
         for (int b = 0; b < numBands; ++b) {
             if (!activeBands[b]) {
                 continue;
             }
-
             /* Bands are not 0-base indexed, so we must add 1 */
             Band poBand = poDataset.GetRasterBand(b + 1);
 
-            buf_type = gdalconst.GDT_Float32;    // poBand.getDataType();
-            buf_size = pixels * (gdal.GetDataTypeSize(buf_type) / 8);
             ByteBuffer data = ByteBuffer.allocateDirect(buf_size);
             data.order(ByteOrder.nativeOrder());
 
             int returnVal;
             try {
-                returnVal = poBand.ReadRaster_Direct(0, 0, xsize, ysize, xsize, ysize, buf_type, data);
+                returnVal = poBand.ReadRaster_Direct(0, 0, width, height, width, height, buf_type, data);
             } catch (Exception ex) {
                 System.err.println("Could not read raster data.");
                 System.err.println(ex.getMessage());
@@ -415,9 +407,8 @@ public class GdalFormater {
             band++;
         }
 
-        float[][] dataF = new float[activeNumber][];
+        float[][] dataF = new float[activeNumber][pixels];
         for (int i = 0; i < activeNumber; ++i) {
-            dataF[i] = new float[pixels];
             bands[i].asFloatBuffer().get(dataF[i]);
         }
 
@@ -473,11 +464,11 @@ public class GdalFormater {
         return dat;
     }
 
-    private static void setDataBandDescription(boolean[] activeBands, Data dat, String[] bandsDesc) {
+    private void setDataBandDescription(boolean[] activeBands, Data dat, String[] bandsDesc) {
         int bInd = 0;
         for (int i = 0; i < activeBands.length; i++) {
             if (activeBands[i]) {
-                dat.setBandDescription(bInd++, bandsDesc[i]); // todo bInd???
+                dat.setBandDescription(bInd++, bandsDesc[i]);
             }
         }
     }
@@ -1006,8 +997,8 @@ public class GdalFormater {
         int bandNum = dataF.length;
 
         // Form max/min, (max-min) values for each band
-        float[] min = new float[dataF.length];
-        float[] max = new float[dataF.length];
+        float[] min = new float[bandNum];
+        float[] max = new float[bandNum];
         Arrays.fill(min, 100000);
         Arrays.fill(max, - 100000);
 
@@ -1056,8 +1047,9 @@ public class GdalFormater {
 
         // x' = (x-x_min)/diap*255; or 0 if diap==0 or if x is not from [min, max]
         int val;
+//        short[][] dataPoints = dat.getDataPoints();
         short[][] dataPoints = dat.getDataPoints();
-        for (int i = 0; i < min.length; i++) {
+        for (int i = 0; i < bandNum; i++) {
             short[] dataPointsBand = dataPoints[i];
             if (diap[i] <= 0) {
                 for (int x = 0; x < n; x++) {
@@ -1067,14 +1059,14 @@ public class GdalFormater {
                 float minBand = min[i];
                 float diapBand = diap[i];
                 float[] dataBandF = dataF[i];
-                short maskValue = (short) Math.round(- minBand / diapBand * 255);
+                short maskValue = (short) Math.round(-minBand / diapBand * 255);
                 if (maskValue < 0) {
                     maskValue = 0;
                 } else {
                     maskValue = 255;
                 }
                 for (int x = 0; x < n; x++) {
-                    if (! Float.isNaN(dataBandF[x])) {
+                    if (!Float.isNaN(dataBandF[x])) {
                         val = Math.round((dataBandF[x] - minBand) / diapBand * 255);
                         if (val < 0) {
                             val = 0;
@@ -1089,7 +1081,6 @@ public class GdalFormater {
                 }
             }
         }
-
     }
 
     private int[] getDifferentColors(int clNum) {
@@ -1114,12 +1105,14 @@ public class GdalFormater {
                 ind = ind % power(freq, d);
             }
 
-            for (int d = 0; d < 3; d++)
+            for (int d = 0; d < 3; d++) {
                 cl[i][d] = cl[i][d] * h + h / 2;
+            }
         }
 
-        for (int i = 0; i < clNum; i++)
+        for (int i = 0; i < clNum; i++) {
             cols[i] = (255 << 24) | (cl[i][0] << 16) | (cl[i][1] << 8) | cl[i][2];
+        }
 
         return cols;
     }
