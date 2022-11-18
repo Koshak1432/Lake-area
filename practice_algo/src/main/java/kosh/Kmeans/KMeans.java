@@ -17,6 +17,10 @@ public class KMeans {
                 this.points[i][j] = points[j][i];
             }
         }
+
+        System.out.println("Pixels: " + pixels);
+        System.out.println("points[0].len : " + points[0].length + ", points.len: " + points.length);
+        System.out.println("Num bands: " + numBands + ", k: " + k);
     }
 
 
@@ -71,7 +75,7 @@ public class KMeans {
         double sum = 0;
         for (Cluster cluster : clusters) {
             for (Integer idx : cluster.getRelatedPointsCoords()) {
-                sum += Math.pow(calculateDistance(points[idx], cluster.getBandsMeans()), 2);
+                sum += calculateDistance(points[idx], cluster.getBandsMeans());
             }
         }
         return sum;
@@ -89,15 +93,42 @@ public class KMeans {
         }
     }
 
-    public int[] kmeans() {
+    public void run() {
         System.out.println("Start k-means");
-        //select k init centroids
+        double bestSSE = Double.MAX_VALUE;
+        double SSE;
+        int[] bestAssignment = new int[0];
+        List<Cluster> bestClusters = null;
+
+        for (int i = 0; i < iterations; ++i) {
+            long start = System.currentTimeMillis();
+            SSE = kmeans();
+            long end = System.currentTimeMillis();
+            System.out.println("Time passed of 1 iteration(sec): " + (end - start) / 1000);
+            System.out.println("SSE after iteration # " + i + " : " + SSE);
+            if (SSE < bestSSE) {
+                bestSSE = SSE;
+                bestAssignment = Arrays.copyOf(assignment, assignment.length);
+                bestClusters = new ArrayList<>(clusters);
+            }
+        }
+        System.out.println("Best sse: " + bestSSE);
+        assignment = bestAssignment;
+        clusters = bestClusters;
+    }
+
+    public List<Cluster> getClusters() {
+        return clusters;
+    }
+
+    public int[] getAssignment() {
+        return assignment;
+    }
+
+    private double kmeans() {
         double SSE = Double.MAX_VALUE; // Sum of Squared Errors
         double minDistance;
-        System.out.println("Pixels: " + pixels);
-        System.out.println("points[0].len : " + points[0].length + ", points.len: " + points.length);
-        System.out.println("Num bands: " + numBands + ", k: " + k);
-
+        //select k init centroids
         initClusters();
 
         while (true) {
@@ -121,19 +152,20 @@ public class KMeans {
             for (Cluster cluster : clusters) {
                 updateCluster(cluster);
             }
-//            System.out.println("Calculating sse...");
-//            double newSSE = calculateSSE();
+            System.out.println("Calculating sse...");
+            double newSSE = calculateSSE();
 //            System.out.println("SSE: " + SSE + ", NEW SSE: " + newSSE + ", difference: " + (SSE - newSSE));
-//            if (SSE - newSSE <= PRECISION) {
+            if (SSE - newSSE <= PRECISION) {
+                return newSSE;
+            }
+            SSE = newSSE;
+
+
+//            if (Arrays.equals(assignment, prevAssignment)) {
 //                break;
 //            }
-//            SSE = newSSE;
-            if (Arrays.equals(assignment, prevAssignment)) {
-                break;
-            }
-            prevAssignment = Arrays.copyOf(assignment, assignment.length);
+//            prevAssignment = Arrays.copyOf(assignment, assignment.length);
         }
-        return assignment;
     }
 
     // a and b are bands arrays
@@ -142,7 +174,7 @@ public class KMeans {
         for (int i = 0; i < numBands; ++i) {
             sum += Math.pow(a[i] - b[i], 2);
         }
-        return Math.sqrt(sum);
+        return sum;
     }
 
 
@@ -151,8 +183,9 @@ public class KMeans {
     private final int pixels;
     private final short[][] points; // dim 1 -- pixel idx, dim 2 -- bands
     private final double PRECISION = 0.001;
-    private final List<Cluster> clusters = new ArrayList<>();
+    private List<Cluster> clusters = new ArrayList<>();
 //    private final Map<Integer, Integer> distribution; // key -- pixel idx, value -- cluster idx
-    private final int[] assignment;
+    private int[] assignment;
     private int[] prevAssignment;
+    private final int iterations = 10;
 }

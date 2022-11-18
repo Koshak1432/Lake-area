@@ -133,7 +133,7 @@ public class GdalFormater {
     }
 
     /**
-     * @return list of bands descriptions or just one element "1."
+     * @return list of bands descriptions or just one element "1"
      */
     public String[] getBandsDescription() {
         // In case of normal image
@@ -154,7 +154,7 @@ public class GdalFormater {
         for (int i = 1; i <= numBands; i++) {
             String bandName = getProperty("Band_" + i);
             if ((bandName == null) || (bandName.length() == 0)) {
-                bandName = i + ".";
+                bandName = i + "";
             }
             bandDesc[i - 1] = bandName;
         }
@@ -312,7 +312,7 @@ public class GdalFormater {
     /**
      * Loading data-file into the new Data object.
      *
-     * @param activeBands - selected bands to load, or all bands if null
+     * @param activeBands selected bands to load, or all bands if null
      * @return Data object filled with data from file; or null if loading was not successful
      */
     public Data loadData(boolean[] activeBands) {
