@@ -7,20 +7,34 @@ import org.silentsoft.arguments.parser.InvalidArgumentsException;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
     public static void main(String[] args) {
-        if (args.length < 3) {
+        if (args.length < 1) {
             System.err.println(USAGE);
+            return;
         }
-        String fileName = parseArgs(args);
-        if (fileName == null) {
+        ArgsParser argsParser = new ArgsParser();
+        ParsedArgs parsed = ArgsParser.parseArgs(args);
+        if (parsed == null) {
+            System.err.println(USAGE);
+            return;
+        }
+        if (parsed.fileName() == null) {
             System.err.println("Couldn't get file name to download");
             return;
         }
 
-        File file = new File(fileName);
+        File file = new File(parsed.fileName());
+        int k = parsed.k();
+        System.out.println(parsed.fileName() + ", " + parsed.k());
 
         GdalFormater formater = new GdalFormater();
         if (!formater.loadHeader(file)) {
@@ -31,15 +45,11 @@ public class Main {
 
         System.out.println("Available num of bands: " + Arrays.toString(formater.getBandsDescription()));
         boolean[] activeBands = new boolean[formater.getBandsNumber()];
-        // спросить какие загружать???? они уже загружены лол
-        // спросить какие отображать в качестве rgb
+        System.out.println("Select bands to show(rgb):");
+        ArgsParser.parseBands(activeBands);
+        System.out.println(Arrays.toString(activeBands)); // debug
 
-//        boolean[] activeBands = new boolean[]{true, false, false, true, false, false, true, false};
-//        boolean[] activeBands = null;
-//
 
-//        int k = 5;
-//
 //        KMeans algo = new KMeans(data.getDataPoints(), k);
 //        algo.run();
 
@@ -61,24 +71,5 @@ public class Main {
 
 
     }
-
-    private static String parseArgs(String[] args) {
-        String fileNameOpt = "-f";
-        Arguments arguments;
-        try {
-            arguments = ArgumentsParser.parse(args);
-        } catch (InvalidArgumentsException e) {
-            e.printStackTrace();
-            System.err.println(USAGE);
-            return null;
-        }
-
-        if (arguments.containsKey(fileNameOpt)) {
-            return arguments.get(fileNameOpt).getValue();
-        }
-        return null;
-    }
-
-
     private static final String USAGE = "Gimme args: <file_to_open> <[bands_to_download]> <[bands_to_show]>";
 }
