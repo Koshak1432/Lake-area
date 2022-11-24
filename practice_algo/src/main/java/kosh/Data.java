@@ -1,7 +1,10 @@
 package kosh;
 
+import kosh.Kmeans.Cluster;
+
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Data {
@@ -23,6 +26,15 @@ public class Data {
         bandsDescriptions.put(idx, description);
     }
 
+    public String getBandDescription(int band) {
+        if (bandsDescriptions.containsKey(band)) {
+            return bandsDescriptions.get(band);
+        }
+        return null;
+    }
+
+
+
     public void setResolution(double resolution) {
         this.resolution = resolution;
     }
@@ -38,6 +50,25 @@ public class Data {
         return dataPoints;
     }
 
+    public void setClassificationAssignment(short[] classificationAssignment) {
+        this.classificationAssignment = classificationAssignment;
+    }
+
+    public void setClusters(List<Cluster> clusters) {
+        this.clusters = clusters;
+    }
+
+    public short[] getClassificationAssignment() {
+        return classificationAssignment;
+    }
+
+    public int getNumberOfClusters() {
+        if (clusters != null) {
+            return clusters.size();
+        }
+        return -1;
+    }
+
     public short[] getPointsRGB(String what) {
         if (what.toLowerCase().equals("red")) {
             return dataPoints[distribution.red()];
@@ -49,10 +80,6 @@ public class Data {
             return dataPoints[distribution.blue()];
         }
         return null;
-    }
-
-    public void setDataPoints(short[][] dataPoints) {
-        this.dataPoints = dataPoints;
     }
 
     public int getWidth() {
@@ -70,7 +97,9 @@ public class Data {
     private double resolution;
     private BandsAsRGB distribution;
     // [bands][width * height] со значениями в отрезке [0, 255], т.е. в первом измерении канал, а во втором значение пикселя [y * w + x]
-    private short[][] dataPoints;
+    private final short[][] dataPoints;
+    private short[] classificationAssignment = null;
+    private List<Cluster> clusters = null;
     private final Map<Integer, String> bandsDescriptions = new HashMap<>();
     private int[] bandsDistribution; // отображает номер канала(in general) в локальный номер канала, тот что в 1d dataPoints
 }

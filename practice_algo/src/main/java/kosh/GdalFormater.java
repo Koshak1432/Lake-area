@@ -586,261 +586,264 @@ public class GdalFormater {
 
     // SAVE
 
-//    public boolean saveClassification(File file, Data resultData, String driverName, String description,
-//                                      int[] clColors) {
-//        return saveClassification(file, resultData, driverName, description, clColors, null);
-//    }
+    public boolean saveClassification(File file, Data resultData, String driverName, String description,
+                                      int[] clColors) {
+        return saveClassification(file, resultData, driverName, description, clColors, null);
+    }
 
-//    /**
-//     * Saving classification result in file.
-//     *
-//     * @param file        - file to save classification
-//     * @param resultData  - Data object containing classification result
-//     * @param driverName  - file type, e.g.: "ENVI", "HFA" for (.img). Set to ENVI if null.
-//     * @param description - string that contains description of the applied classification method, or null
-//     * @param clColors    - colors for the classes, or null
-//     * @param clNames     - colors for the classes, or null
-//     * @return true if the file was saved successfully; false otherwise
-//     */
-//    public boolean saveClassification(File file, Data resultData, String driverName, String description, int[] clColors,
-//                                      String[] classNames) {
-//        if (file == null || resultData == null) {
-//            return false;
-//        }
-//        int clNum = resultData.getNumberOfClusters();
-//        if ((clNum <= 0) || (clNum > 255)) {
-//            return false;
-//        }
-//
+    /**
+     * Saving classification result in file.
+     *
+     * @param file         file to save classification
+     * @param resultData   Data object containing classification result
+     * @param driverName   file type, e.g.: "ENVI", "HFA" for (.img). Set to ENVI if null.
+     * @param description  string that contains description of the applied classification method, or null
+     * @param clColors     colors for the classes, or null
+     * @param classNames   colors for the classes, or null
+     * @return true if the file was saved successfully; false otherwise
+     */
+    public boolean saveClassification(File file, Data resultData, String driverName, String description, int[] clColors,
+                                      String[] classNames) {
+        if (file == null || resultData == null) {
+            return false;
+        }
+        int clNum = resultData.getNumberOfClusters();
+        if ((clNum <= 0) || (clNum > 255)) {
+            return false;
+        }
+
 //        if (description == null) {
 //            description = resultData.getAlgorithmName();
 //        }
-//        if (description == null) {
-//            description = "GdalFormater";
-//        }
-//
-//        if (driverName == null) {
-//            driverName = "ENVI";
-//        }
-//
-//        // If last loaded file corresponds resultData, try to save meta, georef and so on
-//        int h = resultData.getHeight();
-//        int w = resultData.getWidth();
-//        boolean saveMeta = width == w && height == h;
-//
-//        if (driverName.equals("ENVI")) {
-//            String name = file.getName();
-//            if (name.endsWith(".hdr") || name.endsWith(".HDR")) {
-//                file = new File(file.getParent(), name.substring(0, name.length() - 4));
-//            }
-//        }
-//        if (driverName.equals("HFA")) {
-//            file = new File(file.getParent(), file.getName() + ".img");
-//        }
-//
-//        // delete '-1' "noise" cluster;
-//        short[] classNumber = resultData.classNumber.clone();
-//        //resultData.setNumberOfClusters(clNum+1);
+        if (description == null) {
+            description = "GdalFormater";
+        }
+
+        if (driverName == null) {
+            driverName = "ENVI";
+        }
+
+        // If last loaded file corresponds resultData, try to save meta, georef and so on
+        int h = resultData.getHeight();
+        int w = resultData.getWidth();
+        boolean saveMeta = width == w && height == h;
+
+        if (driverName.equals("ENVI")) {
+            String name = file.getName();
+            if (name.endsWith(".hdr") || name.endsWith(".HDR")) {
+                file = new File(file.getParent(), name.substring(0, name.length() - 4));
+            }
+        }
+        if (driverName.equals("HFA")) {
+            file = new File(file.getParent(), file.getName() + ".img");
+        }
+
+        // TODO wtf
+        // delete '-1' "noise" cluster;
+        short[] classNumber = resultData.getClassificationAssignment().clone();
+        //resultData.setNumberOfClusters(clNum+1);
 //        for (int i = 0; i < classNumber.length; i++) {
 //            classNumber[i]++;
 //        }
-//
-//        // Form file
-//        Driver driver = gdal.GetDriverByName(driverName);
-//        Dataset resultDataset = driver.Create(file.getAbsolutePath(), w, h, 1, gdalconst.GDT_Byte);
-//        resultDataset.SetDescription(description);
-//        Band clBand = resultDataset.GetRasterBand(1);
-//        clBand.SetDescription(description);
-//
-//        // Add class names
-//        Vector<String> clNames = new Vector<String>();
-//        if ((classNames == null) || (classNames.length != clNum + 1) || (clNum != clColors.length)) {
-//            clNames.add("Unclassified");
-//            for (int i = 1; i <= clColors.length; i++) {
-//                clNames.add("Class " + i);
-//            }
-//        } else {
-//            if (classNames[0] == null) {
-//                clNames.add("Unclassified");
-//            } else {
-//                clNames.add(classNames[0]);
-//            }
-//            for (int i = 1; i <= clNum; i++) {
-//                if (classNames[i] == null) {
-//                    clNames.add("Class " + i);
-//                } else {
-//                    clNames.add(classNames[i]);
-//                }
-//            }
-//        }
-//        clBand.SetCategoryNames(clNames);
-//
-//        // Add class colors
-//        if ((clColors == null) || (clColors.length != clNum)) {
-//            clColors = getDifferentColors(clNum);
-//        }
-//        clBand.SetRasterColorInterpretation(gdalconst.GCI_PaletteIndex);
-//        ColorTable ct = new ColorTable(gdalconst.GPI_RGB);
-//        ct.SetColorEntry(0, Color.black);
-//        for (int i = 0; i < clNum; i++) {
-//            ct.SetColorEntry(i + 1, new Color(clColors[i]));
-//        }
-//        clBand.SetRasterColorTable(ct);
-//
-//        if (saveMeta) {
-//            resultDataset.SetGeoTransform(poDataset.GetGeoTransform());
-//            resultDataset.SetProjection(poDataset.GetProjection());
-//        }
-//
-//        // Write data
-//        int returnVal = 0;
-//        try {
-//            returnVal = resultDataset.WriteRaster(0, 0, w, h, w, h, gdalconst.GDT_Int16, classNumber, null);
-//        } catch (Exception ex) {
-//            System.err.println("Could not write raster data.");
-//            ex.printStackTrace();
-//            resultDataset.delete();
-//            return false;
-//        }
-//        if (returnVal == gdalconstConstants.CE_Failure) {
-//            System.err.println("Could not write raster data.");
-//            printLastError();
-//            resultDataset.delete();
-//            return false;
-//        }
-//
-//        resultDataset.delete();
-//        return true;
-//    }
-//
-//    /**
-//     * Saving raster data in its internal representation in file.
-//     *
-//     * @param file        - file to save data
-//     * @param resultData  - Data object containing raster to save
-//     * @param driverName  - file type, e.g.: "GTiff", "ENVI", "HFA" for (.img). Set to GTiff if null.
-//     * @param description - string that contains description of the data, or null
-//     * @return true if the file was saved successfully; false otherwise
-//     */
-//    public boolean saveRaster(File file, Data resultData, String driverName, String description) {
-//        return saveRaster(file, resultData, driverName, description, null);
-//    }
-//
-//    /**
-//     * Saving raster data in its internal representation in file.
-//     *
-//     * @param file        - file to save data
-//     * @param resultData  - Data object containing raster to save
-//     * @param driverName  - file type, e.g.: "GTiff", "ENVI", "HFA" for (.img). Set to GTiff if null.
-//     * @param description - string that contains description of the data, or null
-//     * @param bandOrder   - save bands in the given order
-//     * @return true if the file was saved successfully; false otherwise
-//     */
-//    public boolean saveRaster(File file, Data resultData, String driverName, String description, int[] bandOrder) {
-//        if (file == null || resultData == null) {
-//            return false;
-//        }
-//        int h = resultData.getHeight();
-//        int w = resultData.getWidth();
-//        int numBands = resultData.getDimData();
-//        short[][] dat = resultData.dataPoints;
-//        if ((w == 0) || (h == 0) || (numBands == 0)) {
-//            return false;
-//        }
-//
-//        if (bandOrder != null) {
-//            if (bandOrder.length != numBands) {
-//                bandOrder = null;
-//            } else {
-//                for (int b : bandOrder)
-//                    if ((b < 0) || (b >= numBands)) {
-//                        bandOrder = null;
-//                        break;
-//                    }
-//            }
-//        }
-//
+
+
+        // Form file
+        Driver driver = gdal.GetDriverByName(driverName);
+        Dataset resultDataset = driver.Create(file.getAbsolutePath(), w, h, 1, gdalconst.GDT_Byte);
+        resultDataset.SetDescription(description);
+        Band clBand = resultDataset.GetRasterBand(1);
+        clBand.SetDescription(description);
+
+        // Add class names
+        Vector<String> clNames = new Vector<String>();
+        if ((classNames == null) || (classNames.length != clNum + 1) || (clNum != clColors.length)) {
+            clNames.add("Unclassified");
+            for (int i = 1; i <= clColors.length; i++) {
+                clNames.add("Class " + i);
+            }
+        } else {
+            if (classNames[0] == null) {
+                clNames.add("Unclassified");
+            } else {
+                clNames.add(classNames[0]);
+            }
+            for (int i = 1; i <= clNum; i++) {
+                if (classNames[i] == null) {
+                    clNames.add("Class " + i);
+                } else {
+                    clNames.add(classNames[i]);
+                }
+            }
+        }
+        clBand.SetCategoryNames(clNames);
+
+        // Add class colors
+        if ((clColors == null) || (clColors.length != clNum)) {
+            clColors = getDifferentColors(clNum);
+        }
+        clBand.SetRasterColorInterpretation(gdalconst.GCI_PaletteIndex);
+        ColorTable ct = new ColorTable(gdalconst.GPI_RGB);
+        ct.SetColorEntry(0, Color.black);
+        for (int i = 0; i < clNum; i++) {
+            ct.SetColorEntry(i + 1, new Color(clColors[i]));
+        }
+        clBand.SetRasterColorTable(ct);
+
+        if (saveMeta) {
+            resultDataset.SetGeoTransform(poDataset.GetGeoTransform());
+            resultDataset.SetProjection(poDataset.GetProjection());
+        }
+
+        // Write data
+        int returnVal = 0;
+        try {
+            returnVal = resultDataset.WriteRaster(0, 0, w, h, w, h, gdalconst.GDT_Int16, classNumber, null);
+        } catch (Exception ex) {
+            System.err.println("Could not write raster data.");
+            ex.printStackTrace();
+            resultDataset.delete();
+            return false;
+        }
+        if (returnVal == gdalconstConstants.CE_Failure) {
+            System.err.println("Could not write raster data.");
+            printLastError();
+            resultDataset.delete();
+            return false;
+        }
+
+        resultDataset.delete();
+        return true;
+    }
+
+    /**
+     * Saving raster data in its internal representation in file.
+     *
+     * @param file        - file to save data
+     * @param resultData  - Data object containing raster to save
+     * @param driverName  - file type, e.g.: "GTiff", "ENVI", "HFA" for (.img). Set to GTiff if null.
+     * @param description - string that contains description of the data, or null
+     * @return true if the file was saved successfully; false otherwise
+     */
+    public boolean saveRaster(File file, Data resultData, String driverName, String description) {
+        return saveRaster(file, resultData, driverName, description, null);
+    }
+
+    /**
+     * Saving raster data in its internal representation in file.
+     *
+     * @param file        - file to save data
+     * @param resultData  - Data object containing raster to save
+     * @param driverName  - file type, e.g.: "GTiff", "ENVI", "HFA" for (.img). Set to GTiff if null.
+     * @param description - string that contains description of the data, or null
+     * @param bandOrder   - save bands in the given order
+     * @return true if the file was saved successfully; false otherwise
+     */
+    public boolean saveRaster(File file, Data resultData, String driverName, String description, int[] bandOrder) {
+        if (file == null || resultData == null) {
+            return false;
+        }
+        int h = resultData.getHeight();
+        int w = resultData.getWidth();
+        short[][] dat = resultData.getDataPoints();
+        int numBands = dat.length;
+
+        if ((w == 0) || (h == 0) || (numBands == 0)) {
+            return false;
+        }
+
+        if (bandOrder != null) {
+            if (bandOrder.length != numBands) {
+                bandOrder = null;
+            } else {
+                for (int b : bandOrder)
+                    if ((b < 0) || (b >= numBands)) {
+                        bandOrder = null;
+                        break;
+                    }
+            }
+        }
+
 //        if (description == null) {
 //            description = resultData.getImageName();
 //        }
-//        if (description == null) {
-//            description = "GdalFormater";
-//        }
-//
-//        if (driverName == null) {
-//            driverName = "GTiff";
-//        }
-//
-//        // If last loaded file corresponds resultData, try to save meta, georef and so on
-//        boolean saveMeta = width == w && height == h;
-//
-//        String fname = file.getName();
-//        if (driverName.equals("ENVI")) {
-//            if (fname.endsWith(".hdr") || fname.endsWith(".HDR")) {
-//                file = new File(file.getParent(), fname.substring(0, fname.length() - 4));
-//            }
-//        }
-//        if (driverName.equals("HFA")) {
-//            if (!fname.endsWith(".img") && !fname.endsWith(".IMG")) {
-//                file = new File(file.getParent(), fname + ".img");
-//            }
-//        }
-//        if (driverName.equals("GTiff")) {
-//            if (!fname.endsWith(".tif") && !fname.endsWith(".TIF") && !fname.endsWith(".tiff") &&
-//                    !fname.endsWith(".TIFF")) {
-//                file = new File(file.getParent(), fname + ".tif");
-//            }
-//        }
-//
-//        // Form file
-//        Driver drv = gdal.GetDriverByName(driverName);
-//        Dataset resultDataset = drv.Create(file.getAbsolutePath(), w, h, numBands, gdalconst.GDT_Byte);
-//        resultDataset.SetDescription(description);
-//        if (saveMeta) {
-//            resultDataset.SetGeoTransform(poDataset.GetGeoTransform());
-//            resultDataset.SetProjection(poDataset.GetProjection());
-//        }
-//
-//        // Set bands descriptions
-//        for (int b = 0; b < numBands; b++) {
-//            Band band = resultDataset.GetRasterBand(b + 1);
-//            int corrBand = b;
-//            if (bandOrder != null) {
-//                corrBand = bandOrder[b];
-//            }
-//            band.SetDescription(resultData.getBandDescription(corrBand));
-//        }
-//
-//        // Write data
-//        for (int b = 0; b < numBands; b++) {
-//            int corrBand = b;
-//            if (bandOrder != null) {
-//                corrBand = bandOrder[b];
-//            }
-//            short[] bandDat = dat[corrBand];
-//            Band band = resultDataset.GetRasterBand(b + 1);
-//
-//            int returnVal = 0;
-//            try {
-//                // returnVal = band.WriteRaster(0, 0, w, h, w, h, gdalconst.GDT_Int16, bandDat);
-//                returnVal = band.WriteRaster(0, 0, w, h, bandDat);
-//            } catch (Exception ex) {
-//                System.err.println("Could not write raster data.");
-//                ex.printStackTrace();
-//                resultDataset.delete();
-//                return false;
-//            }
-//            if (returnVal == gdalconstConstants.CE_Failure) {
-//                System.err.println("Could not write raster data.");
-//                printLastError();
-//                resultDataset.delete();
-//                return false;
-//            }
-//        }
-//
-//        resultDataset.delete();
-//        return true;
-//    }
+        if (description == null) {
+            description = "GdalFormater";
+        }
+
+        if (driverName == null) {
+            driverName = "GTiff";
+        }
+
+        // If last loaded file corresponds resultData, try to save meta, georef and so on
+        boolean saveMeta = width == w && height == h;
+
+        String fname = file.getName();
+        if (driverName.equals("ENVI")) {
+            if (fname.endsWith(".hdr") || fname.endsWith(".HDR")) {
+                file = new File(file.getParent(), fname.substring(0, fname.length() - 4));
+            }
+        }
+        if (driverName.equals("HFA")) {
+            if (!fname.endsWith(".img") && !fname.endsWith(".IMG")) {
+                file = new File(file.getParent(), fname + ".img");
+            }
+        }
+        if (driverName.equals("GTiff")) {
+            if (!fname.endsWith(".tif") && !fname.endsWith(".TIF") && !fname.endsWith(".tiff") &&
+                    !fname.endsWith(".TIFF")) {
+                file = new File(file.getParent(), fname + ".tif");
+            }
+        }
+
+        // Form file
+        Driver drv = gdal.GetDriverByName(driverName);
+        Dataset resultDataset = drv.Create(file.getAbsolutePath(), w, h, numBands, gdalconst.GDT_Byte);
+        resultDataset.SetDescription(description);
+        if (saveMeta) {
+            resultDataset.SetGeoTransform(poDataset.GetGeoTransform());
+            resultDataset.SetProjection(poDataset.GetProjection());
+        }
+
+        // Set bands descriptions
+        for (int b = 0; b < numBands; b++) {
+            Band band = resultDataset.GetRasterBand(b + 1);
+            int corrBand = b;
+            if (bandOrder != null) {
+                corrBand = bandOrder[b];
+            }
+            band.SetDescription(resultData.getBandDescription(corrBand));
+        }
+
+        // Write data
+        for (int b = 0; b < numBands; b++) {
+            int corrBand = b;
+            if (bandOrder != null) {
+                corrBand = bandOrder[b];
+            }
+            short[] bandDat = dat[corrBand];
+            Band band = resultDataset.GetRasterBand(b + 1);
+
+            int returnVal;
+            try {
+                // returnVal = band.WriteRaster(0, 0, w, h, w, h, gdalconst.GDT_Int16, bandDat);
+                returnVal = band.WriteRaster(0, 0, w, h, bandDat);
+            } catch (Exception ex) {
+                System.err.println("Could not write raster data.");
+                ex.printStackTrace();
+                resultDataset.delete();
+                return false;
+            }
+            if (returnVal == gdalconstConstants.CE_Failure) {
+                System.err.println("Could not write raster data.");
+                printLastError();
+                resultDataset.delete();
+                return false;
+            }
+        }
+
+        resultDataset.delete();
+        return true;
+    }
 
     // ADDITIONAL
 
