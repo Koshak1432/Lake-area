@@ -31,13 +31,16 @@ public class ImageConstructor {
         return image;
     }
 
-    public BufferedImage constructImage(List<Cluster> clusters, int[] assignment, BandsAsRGB distribution) {
+    public BufferedImage constructImage(List<Cluster> clusters, int[] assignment, BandsAsRGB generalColorDistribution, int[] bandsDistribution) {
         assert (assignment.length == width * height);
+        BandsAsRGB localDistribution = Util.transformDistribution(generalColorDistribution, bandsDistribution);
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 short[] clusterMean = clusters.get(assignment[y * width + x]).getBandsMeans();
-                image.setRGB(x, y, getRGBColor(clusterMean[distribution.red()], clusterMean[distribution.green()], clusterMean[distribution.blue()]));
+                image.setRGB(x, y, getRGBColor(clusterMean[localDistribution.red()],
+                                                    clusterMean[localDistribution.green()],
+                                                    clusterMean[localDistribution.blue()]));
             }
         }
         return image;

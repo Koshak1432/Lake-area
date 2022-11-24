@@ -15,8 +15,8 @@ public class Data {
         dataPoints = new short[activeNumber][width * height];
     }
 
-    public void setBandDistribution(int generalBand, int localBand) {
-        bandsDistribution[generalBand] = localBand;
+    public void setBandDistribution(int[] distribution) {
+        bandsDistribution = distribution;
     }
 
     public void setBandDescription(int idx, String description) {
@@ -30,18 +30,8 @@ public class Data {
     // [4, 1, 8] на входе --> [1, 0, 2]
     // 4 --> 1 (вторым обрабатывался)
     // 1 --> 0, 8 --> 2
-    private BandsAsRGB transformDistribution(BandsAsRGB generalDistribution) {
-        System.out.println("general: red - " + generalDistribution.red() + ", green: " + generalDistribution.green() + ", blue: " + generalDistribution.blue());
-        int red = bandsDistribution[generalDistribution.red()];
-        int green = bandsDistribution[generalDistribution.green()];
-        int blue = bandsDistribution[generalDistribution.blue()];
-        assert (red >= 0 && green >= 0 && blue >= 0);
-        System.out.println("local: red - " + red + ", green: " + green + ", blue: " + blue);
-        return new BandsAsRGB(red, green, blue);
-    }
-
     public void setDistribution(BandsAsRGB generalDistr) {
-        this.distribution = transformDistribution(generalDistr);
+        this.distribution = Util.transformDistribution(generalDistr, bandsDistribution);
     }
 
     public short[][] getDataPoints() {

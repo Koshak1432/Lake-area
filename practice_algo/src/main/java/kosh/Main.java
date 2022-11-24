@@ -38,29 +38,33 @@ public class Main {
 
         // какие грузить
         boolean[] activeBands = new boolean[formater.getBandsNumber()];
-        BandsAsRGB distribution;
+        int activeNum;
+        BandsAsRGB colorsDistribution;
         System.out.println("Available bands: " + Arrays.toString(formater.getBandsDescription()));
         System.out.println("Select bands to load:");
         try (Scanner scanner = new Scanner(System.in)) {
-            int activeNum = ArgsParser.parseBandsToLoad(activeBands, scanner);
+            activeNum = ArgsParser.parseBandsToLoad(activeBands, scanner);
 
             System.out.println("Available bands to show: " + Arrays.toString(
                     ArgsParser.getAvailableBandsToShow(activeBands, activeNum)));
             System.out.println("Select bands to show(R G B)");
-            distribution = ArgsParser.parseBandsToShow(activeBands, scanner);
-            if (distribution == null) {
+            colorsDistribution = ArgsParser.parseBandsToShow(activeBands, scanner);
+            if (colorsDistribution == null) {
                 System.err.println("Couldn't parse bands to show");
                 return;
             }
         }
 
         Data data = formater.loadData(activeBands);
-        data.setDistribution(distribution);
+        data.setDistribution(colorsDistribution);
+        int[] bandsDistribution = Util.getGeneralToLocalDistribution(activeBands, activeNum);
+        data.setBandDistribution(bandsDistribution);
+
 
         // какие отображать из загруженных
 
         System.out.println("Active: " + Arrays.toString(activeBands));
-        System.out.println("Red: " + distribution.red() + ", green: " + distribution.green() + ", blue: " + distribution.blue());
+        System.out.println("Red: " + colorsDistribution.red() + ", green: " + colorsDistribution.green() + ", blue: " + colorsDistribution.blue());
 
         KMeans algo = new KMeans(data.getDataPoints(), k);
         int iterations = 1;
@@ -72,13 +76,12 @@ public class Main {
         List<Cluster> clusters = algo.getClusters();
         System.out.println("ASSIGNMENT LEN: " + clusteringResult.length);
 
-
         // после применения алгоритма
         // срдение цвета -- сумма по пикселям/ колв-во пикселей встретившихся/ случайные цвета
         // цвет для кластера
         ImageConstructor constructor = new ImageConstructor(data.getWidth(), data.getHeight());
 //        BufferedImage img = constructor.constructImage(data.getPointsRGB("red"), data.getPointsRGB("green"), data.getPointsRGB("blue"));
-        BufferedImage img = constructor.constructImage(clusters, clusteringResult, distribution);
+        BufferedImage img = constructor.constructImage(clusters, clusteringResult, colorsDistribution, bandsDistribution);
         if (img != null) {
             System.out.println(img);
             ImageWindow imageWindow = new ImageWindow(img);

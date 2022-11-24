@@ -18,7 +18,6 @@ public class KMeans {
         }
 
         System.out.println("Pixels: " + pixels);
-        System.out.println("points[0].len : " + points[0].length + ", points.len: " + points.length);
         System.out.println("Num bands: " + numBands + ", k: " + k);
     }
 

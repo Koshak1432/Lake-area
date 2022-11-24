@@ -464,10 +464,8 @@ public class GdalFormater {
     }
 
     private void setDataBandDescription(boolean[] activeBands, Data dat, String[] bandsDesc) {
-        int bInd = 0;
-        for (int i = 0; i < activeBands.length; i++) {
+        for (int i = 0, bInd = 0; i < activeBands.length; ++i) {
             if (activeBands[i]) {
-                dat.setBandDistribution(i, bInd);
                 dat.setBandDescription(bInd++, bandsDesc[i]);
             }
         }
