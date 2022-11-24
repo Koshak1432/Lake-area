@@ -2,7 +2,6 @@ package kosh;
 
 import kosh.Kmeans.Cluster;
 import kosh.Kmeans.KMeans;
-import org.gdal.gdal.Band;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -60,9 +59,6 @@ public class Main {
         int[] bandsDistribution = Util.getGeneralToLocalDistribution(activeBands, activeNum);
         data.setBandDistribution(bandsDistribution);
 
-
-        // какие отображать из загруженных
-
         System.out.println("Active: " + Arrays.toString(activeBands));
         System.out.println("Red: " + colorsDistribution.red() + ", green: " + colorsDistribution.green() + ", blue: " + colorsDistribution.blue());
 
@@ -74,21 +70,19 @@ public class Main {
         }
         int[] clusteringResult = algo.getAssignment();
         List<Cluster> clusters = algo.getClusters();
-        System.out.println("ASSIGNMENT LEN: " + clusteringResult.length);
 
         // после применения алгоритма
         // срдение цвета -- сумма по пикселям/ колв-во пикселей встретившихся/ случайные цвета
         // цвет для кластера
         ImageConstructor constructor = new ImageConstructor(data.getWidth(), data.getHeight());
 //        BufferedImage img = constructor.constructImage(data.getPointsRGB("red"), data.getPointsRGB("green"), data.getPointsRGB("blue"));
-        BufferedImage img = constructor.constructImage(clusters, clusteringResult, colorsDistribution, bandsDistribution);
+//        BufferedImage img = constructor.constructImageByClustersColors(clusters, clusteringResult, colorsDistribution, bandsDistribution);
+        BufferedImage img = constructor.constructImageRandomColors(clusteringResult, clusters.size());
         if (img != null) {
             System.out.println(img);
             ImageWindow imageWindow = new ImageWindow(img);
             imageWindow.displayImage();
         }
     }
-    private static final String fileNameOpt = "-f";
-    private static final String clustersNumOpt = "-k";
-    private static final String USAGE = "Gimme args: <file_to_open> <[bands_to_download]> <[bands_to_show]>";
+    private static final String USAGE = "Gimme args: -f<file_to_open> -k<num_of_clusters>";
 }

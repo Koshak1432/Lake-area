@@ -115,7 +115,6 @@ public class KMeans {
 
         while (true) {
             clearClusters();
-            System.out.println("Finding the nearest clusters...");
             for (int i = 0; i < pixels; ++i) {
                 minDistance = Double.MAX_VALUE;
                 int nearestClusterIdx = 0;
@@ -130,11 +129,9 @@ public class KMeans {
             }
             addToClusters();
 
-            System.out.println("Updating clusters...");
             for (Cluster cluster : clusters) {
                 updateCluster(cluster);
             }
-            System.out.println("Calculating sse...");
             double newSSE = calculateSSE();
             if (SSE - newSSE <= PRECISION) {
                 return newSSE;
