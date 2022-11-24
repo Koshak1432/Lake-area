@@ -154,7 +154,7 @@ public class GdalFormater {
         for (int i = 1; i <= numBands; i++) {
             String bandName = getProperty("Band_" + i);
             if ((bandName == null) || (bandName.length() == 0)) {
-                bandName = i + "";
+                bandName = Integer.toString(i);
             }
             bandDesc[i - 1] = bandName;
         }
@@ -324,13 +324,13 @@ public class GdalFormater {
         activeBands = fillBandsIfNull(activeBands);
         if (numBands != activeBands.length) {
             System.err.println("num bands: " + numBands + " , bands.len: " + activeBands.length);
-            System.err.println("Invalid selected bands!");
+            System.err.println("Invalid selected bands");
             return null;
         }
         int activeNumber = countActiveNumber(activeBands);
         if (activeNumber == 0) {
             System.err.println("num bands: " + numBands + " , bands.len: " + activeBands.length + " , active number: " + activeNumber);
-            System.err.println("Invalid selected bands!");
+            System.err.println("Invalid selected bands");
             return null;
         }
 
@@ -425,7 +425,7 @@ public class GdalFormater {
         // Form data object
         Data dat = formDataWithDescription(activeBands, activeNumber);
 
-        short[][] bands = dat.getDataPoints(); // todo все пиксели по каналам???   что лежит в bands[n]?
+        short[][] bands = dat.getDataPoints();
 
         int band = 0;
         for (int b = 0; b < numBands; b++) {
@@ -457,8 +457,7 @@ public class GdalFormater {
     }
 
     private Data formDataWithDescription(boolean[] activeBands, int activeNumber) {
-        String fileName = getFileName();
-        Data dat = new Data(width, height, activeNumber, fileName);
+        Data dat = new Data(width, height, activeNumber, getFileName(), numBands);
         String[] bandsDesc = getBandsDescription();
         setDataBandDescription(activeBands, dat, bandsDesc);
         return dat;
@@ -468,6 +467,7 @@ public class GdalFormater {
         int bInd = 0;
         for (int i = 0; i < activeBands.length; i++) {
             if (activeBands[i]) {
+                dat.setBandDistribution(i, bInd);
                 dat.setBandDescription(bInd++, bandsDesc[i]);
             }
         }
@@ -577,7 +577,7 @@ public class GdalFormater {
         if (dotInd > 0) {
             fileName = fileName.substring(0, dotInd);
         }
-        Data dat = new Data(1, n, activeNumber, fileName + "_part");
+        Data dat = new Data(1, n, activeNumber, fileName + "_part", numBands);
         String[] bandsDesc = getBandsDescription();
         setDataBandDescription(activeBands, dat, bandsDesc);
 
@@ -1047,7 +1047,6 @@ public class GdalFormater {
 
         // x' = (x-x_min)/diap*255; or 0 if diap==0 or if x is not from [min, max]
         int val;
-//        short[][] dataPoints = dat.getDataPoints();
         short[][] dataPoints = dat.getDataPoints();
         for (int i = 0; i < bandNum; i++) {
             short[] dataPointsBand = dataPoints[i];

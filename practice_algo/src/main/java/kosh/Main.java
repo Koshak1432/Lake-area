@@ -1,19 +1,14 @@
 package kosh;
 
+import kosh.Kmeans.Cluster;
 import kosh.Kmeans.KMeans;
-import org.silentsoft.arguments.parser.Arguments;
-import org.silentsoft.arguments.parser.ArgumentsParser;
-import org.silentsoft.arguments.parser.InvalidArgumentsException;
+import org.gdal.gdal.Band;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Main {
     public static void main(String[] args) {
@@ -21,14 +16,13 @@ public class Main {
             System.err.println(USAGE);
             return;
         }
-        ArgsParser argsParser = new ArgsParser();
         ParsedArgs parsed = ArgsParser.parseArgs(args);
         if (parsed == null) {
             System.err.println(USAGE);
             return;
         }
         if (parsed.fileName() == null) {
-            System.err.println("Couldn't get file name to download");
+            System.err.println("Couldn't get file name");
             return;
         }
 
@@ -41,35 +35,57 @@ public class Main {
             System.err.println("Couldn't load header");
             return;
         }
-        Data data = formater.loadData(null);
 
-        System.out.println("Available num of bands: " + Arrays.toString(formater.getBandsDescription()));
+        // какие грузить
         boolean[] activeBands = new boolean[formater.getBandsNumber()];
-        System.out.println("Select bands to show(rgb):");
-        ArgsParser.parseBands(activeBands);
-        System.out.println(Arrays.toString(activeBands)); // debug
+        BandsAsRGB distribution;
+        System.out.println("Available bands: " + Arrays.toString(formater.getBandsDescription()));
+        System.out.println("Select bands to load:");
+        try (Scanner scanner = new Scanner(System.in)) {
+            int activeNum = ArgsParser.parseBandsToLoad(activeBands, scanner);
+
+            System.out.println("Available bands to show: " + Arrays.toString(
+                    ArgsParser.getAvailableBandsToShow(activeBands, activeNum)));
+            System.out.println("Select bands to show(R G B)");
+            distribution = ArgsParser.parseBandsToShow(activeBands, scanner);
+            if (distribution == null) {
+                System.err.println("Couldn't parse bands to show");
+                return;
+            }
+        }
+
+        Data data = formater.loadData(activeBands);
+        data.setDistribution(distribution);
+
+        // какие отображать из загруженных
+
+        System.out.println("Active: " + Arrays.toString(activeBands));
+        System.out.println("Red: " + distribution.red() + ", green: " + distribution.green() + ", blue: " + distribution.blue());
+
+        KMeans algo = new KMeans(data.getDataPoints(), k);
+        int iterations = 1;
+        if (!algo.run(iterations)) {
+            System.err.println("Error while running k-means");
+            return;
+        }
+        int[] clusteringResult = algo.getAssignment();
+        List<Cluster> clusters = algo.getClusters();
+        System.out.println("ASSIGNMENT LEN: " + clusteringResult.length);
 
 
-//        KMeans algo = new KMeans(data.getDataPoints(), k);
-//        algo.run();
-
-//        BandsAsRGB distribution = new BandsAsRGB(1, 3, 8);
-
-        // отобразить список каналов
-        // какие каналы загружать, какие отображать в качестве каких
         // после применения алгоритма
         // срдение цвета -- сумма по пикселям/ колв-во пикселей встретившихся/ случайные цвета
-        // цвет для кластера,
-//        ImageConstructor constructor = new ImageConstructor(data.getDataPoints()[1], data.getDataPoints()[4],
-//                                                        data.getDataPoints()[7], data.getWidth(), data.getHeight());
-//        BufferedImage img = constructor.constructImage();
-//        if (img != null) {
-//            System.out.println(img);
-//            ImageWindow imageWindow = new ImageWindow(img);
-//            imageWindow.displayImage();
-//        }
-
-
+        // цвет для кластера
+        ImageConstructor constructor = new ImageConstructor(data.getWidth(), data.getHeight());
+//        BufferedImage img = constructor.constructImage(data.getPointsRGB("red"), data.getPointsRGB("green"), data.getPointsRGB("blue"));
+        BufferedImage img = constructor.constructImage(clusters, clusteringResult, distribution);
+        if (img != null) {
+            System.out.println(img);
+            ImageWindow imageWindow = new ImageWindow(img);
+            imageWindow.displayImage();
+        }
     }
+    private static final String fileNameOpt = "-f";
+    private static final String clustersNumOpt = "-k";
     private static final String USAGE = "Gimme args: <file_to_open> <[bands_to_download]> <[bands_to_show]>";
 }

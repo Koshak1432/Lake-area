@@ -1,10 +1,12 @@
 package kosh;
 
+import org.gdal.gdal.Band;
 import org.silentsoft.arguments.parser.Arguments;
 import org.silentsoft.arguments.parser.ArgumentsParser;
 import org.silentsoft.arguments.parser.InvalidArgumentsException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -26,61 +28,109 @@ public class ArgsParser {
 
         if (arguments.containsKey(clustersNumOpt)) {
             k = Integer.parseInt(arguments.get(clustersNumOpt).getValue());
-            if (k < 0) {
+            if (k <= 0) {
+                System.err.println("Number of clusters(k) must be > 0");
                 return null;
             }
         } else {
+            System.err.println("Missed " + clustersNumOpt + " option");
             return null;
         }
         if (arguments.containsKey(fileNameOpt)) {
             fileName = arguments.get(fileNameOpt).getValue();
         } else {
+            System.err.println("Missed " + fileNameOpt + "option");
             return null;
         }
 
         return new ParsedArgs(fileName, k);
     }
 
-    public static void parseBands(boolean[] activeBands) {
+    public static int parseBandsToLoad(boolean[] activeBands, Scanner scanner) {
         List<String> sIntegersList = new ArrayList<>();
-        List<Integer> integers = new ArrayList<>();
+        int activeNum = 0;
+
+        while (scanner.hasNextLine()) {
+            sIntegersList.clear();
+            Arrays.fill(activeBands, false);
+
+            parseLineIn(sIntegersList, scanner);
+            if (sIntegersList.size() < 3) {
+                System.err.println("Invalid input");
+                continue;
+            }
+            activeNum = sIntegersList.size();
+
+            if (fillBandsToLoad(activeBands, sIntegersList)) {
+                break;
+            }
+            System.out.println("Invalid input, select bands:");
+        }
+        return activeNum;
+    }
+
+    public static BandsAsRGB parseBandsToShow(boolean[] activeBands, Scanner scanner) {
+        List<String> sIntegersList = new ArrayList<>();
+        BandsAsRGB distribution = null;
+
+        while (scanner.hasNextLine()) {
+            sIntegersList.clear();
+
+            parseLineIn(sIntegersList, scanner);
+            if (sIntegersList.size() != 3) {
+                System.err.println("Invalid, write 3 channels RGB");
+                continue;
+            }
+
+            if ((distribution = getRGBDistribution(activeBands, sIntegersList)) != null) {
+                break;
+            }
+            System.out.println("Invalid input, select bands:");
+        }
+        return distribution;
+    }
+
+    private static void parseLineIn(List<String> sIntegersList, Scanner scanner) {
         Pattern intPattern = Pattern.compile("\\d+");
-        Matcher matcher;
-        String input;
-        boolean error;
+        String input = scanner.nextLine();
+        Matcher matcher = intPattern.matcher(input);
+        while (matcher.find()) {
+            sIntegersList.add(matcher.group());
+        }
+    }
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            while (scanner.hasNextLine()) {
-                sIntegersList.clear();
-                integers.clear();
-                error = false;
-                input = scanner.nextLine();
-                matcher = intPattern.matcher(input);
+    private static boolean fillBandsToLoad(boolean[] activeBands, List<String> sIntegersList) {
+        for (String sInt : sIntegersList) {
+            int arrIdx = Integer.parseInt(sInt) - 1;
+            if (arrIdx < 0 || arrIdx >= activeBands.length) {
+                return false;
+            }
+            activeBands[arrIdx] = true;
+        }
+        return true;
+    }
 
-                while (matcher.find()) {
-                    sIntegersList.add(matcher.group());
-                }
-                if (sIntegersList.size() < 3) {
-                    continue;
-                }
-                for (String sInt : sIntegersList) {
-                    int num = Integer.parseInt(sInt);
-                    int arrIdx = num - 1;
-                    if (arrIdx < 0 || arrIdx > activeBands.length) {
-                        error = true;
-                        break;
-                    }
-                    integers.add(arrIdx);
-                }
-                if (!error) {
-                    for (Integer num : integers) {
-                        activeBands[num] = true;
-                    }
-                    break;
-                }
-                System.out.println("Select bands to show(rgb):");
+    private static BandsAsRGB getRGBDistribution(boolean[] activeBands, List<String> sIntegersList) {
+        int red = Integer.parseInt(sIntegersList.get(0)) - 1;
+        int green = Integer.parseInt(sIntegersList.get(1)) - 1;
+        int blue = Integer.parseInt(sIntegersList.get(2)) - 1;
+        if (red >= 0 && green >= 0 && blue >= 0 && red < activeBands.length && green < activeBands.length && blue < activeBands.length) {
+            if (activeBands[red] && activeBands[green] && activeBands[blue] && red != green && green != blue && red != blue) {
+                return new BandsAsRGB(red, green, blue);
             }
         }
+        return null;
+    }
+
+    public static String[] getAvailableBandsToShow(boolean[] bands, int activeNum) {
+        String[] available = new String[activeNum];
+        int availNum = 0;
+        for (int i = 0; i < bands.length; ++i) {
+            if (bands[i]) {
+                available[availNum++] = Integer.toString(i + 1);
+            }
+        }
+        return available;
     }
 
 }

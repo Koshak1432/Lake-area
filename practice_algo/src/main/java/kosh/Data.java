@@ -1,15 +1,22 @@
 package kosh;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Data {
-    public Data(int width, int height, int activeNumber, String fileName) {
+    public Data(int width, int height, int activeNumber, String fileName, int totalBandsNum) {
         this.width = width;
         this.height = height;
         this.activeNum = activeNumber;
         this.fileName = fileName;
+        bandsDistribution = new int[totalBandsNum];
+        Arrays.fill(bandsDistribution, -1);
         dataPoints = new short[activeNumber][width * height];
+    }
+
+    public void setBandDistribution(int generalBand, int localBand) {
+        bandsDistribution[generalBand] = localBand;
     }
 
     public void setBandDescription(int idx, String description) {
@@ -20,12 +27,38 @@ public class Data {
         this.resolution = resolution;
     }
 
-    public void setDistribution(int red, int green, int blue) {
-        distribution = new BandsAsRGB(red, green, blue);
+    // [4, 1, 8] на входе --> [1, 0, 2]
+    // 4 --> 1 (вторым обрабатывался)
+    // 1 --> 0, 8 --> 2
+    private BandsAsRGB transformDistribution(BandsAsRGB generalDistribution) {
+        System.out.println("general: red - " + generalDistribution.red() + ", green: " + generalDistribution.green() + ", blue: " + generalDistribution.blue());
+        int red = bandsDistribution[generalDistribution.red()];
+        int green = bandsDistribution[generalDistribution.green()];
+        int blue = bandsDistribution[generalDistribution.blue()];
+        assert (red >= 0 && green >= 0 && blue >= 0);
+        System.out.println("local: red - " + red + ", green: " + green + ", blue: " + blue);
+        return new BandsAsRGB(red, green, blue);
+    }
+
+    public void setDistribution(BandsAsRGB generalDistr) {
+        this.distribution = transformDistribution(generalDistr);
     }
 
     public short[][] getDataPoints() {
         return dataPoints;
+    }
+
+    public short[] getPointsRGB(String what) {
+        if (what.toLowerCase().equals("red")) {
+            return dataPoints[distribution.red()];
+        }
+        if (what.toLowerCase().equals("green")) {
+            return dataPoints[distribution.green()];
+        }
+        if (what.toLowerCase().equals("blue")) {
+            return dataPoints[distribution.blue()];
+        }
+        return null;
     }
 
     public void setDataPoints(short[][] dataPoints) {
@@ -46,6 +79,8 @@ public class Data {
     private final String fileName;
     private double resolution;
     private BandsAsRGB distribution;
-    private short[][] dataPoints; // [bands][width * height] в отрезке [0, 255], т.е. в первом измерении канал, а во втором значение пикселя [y * w + x]
+    // [bands][width * height] со значениями в отрезке [0, 255], т.е. в первом измерении канал, а во втором значение пикселя [y * w + x]
+    private short[][] dataPoints;
     private final Map<Integer, String> bandsDescriptions = new HashMap<>();
+    private int[] bandsDistribution; // отображает номер канала(in general) в локальный номер канала, тот что в 1d dataPoints
 }

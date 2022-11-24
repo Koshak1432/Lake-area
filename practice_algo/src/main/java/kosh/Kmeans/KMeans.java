@@ -7,11 +7,10 @@ public class KMeans {
         this.k = k;
         this.pixels = points[0].length;
         this.numBands = points.length;
-//        this.distribution = new ClusterDistribution[pixels];
         this.assignment = new int[pixels];
-        this.prevAssignment = new int[pixels];
         this.points = new short[pixels][numBands];
 
+        // maybe make 1d array
         for (int i = 0; i < pixels; ++i) {
             for (int j = 0; j < numBands; ++j) {
                 this.points[i][j] = points[j][i];
@@ -23,26 +22,6 @@ public class KMeans {
         System.out.println("Num bands: " + numBands + ", k: " + k);
     }
 
-
-
-
-//    private List<List<Integer>> kmeanspp(short[][] dataPoints, int k) {
-//        List<List<Integer>> centroids = new ArrayList<>();
-//
-//        // выбрать рандомный из всех точек и засунуть
-//        Random random = new Random();
-//        List<Integer> first = new ArrayList<>();
-//        first.add(random.nextInt(pixels));
-//        centroids.add(first);
-//
-//        //добавить взвешенные центроиды
-//        for (int i = 0; i < k; ++i) {
-//            centroids.add()
-//        }
-//
-//
-//        return centroids;
-//    }
 
     private void updateCluster(Cluster cluster) {
         int sum;
@@ -93,8 +72,12 @@ public class KMeans {
         }
     }
 
-    public void run() {
+    public boolean run(int iterations) {
         System.out.println("Start k-means");
+        if (iterations <= 0) {
+            System.err.println("Num of iterations must be > 0");
+            return false;
+        }
         double bestSSE = Double.MAX_VALUE;
         double SSE;
         int[] bestAssignment = new int[0];
@@ -104,8 +87,7 @@ public class KMeans {
             long start = System.currentTimeMillis();
             SSE = kmeans();
             long end = System.currentTimeMillis();
-            System.out.println("Time passed of 1 iteration(sec): " + (end - start) / 1000);
-            System.out.println("SSE after iteration # " + i + " : " + SSE);
+            System.out.println("Time passed of " + i + " iteration(sec): " + (end - start) / 1000 + " , SSE: " + SSE);
             if (SSE < bestSSE) {
                 bestSSE = SSE;
                 bestAssignment = Arrays.copyOf(assignment, assignment.length);
@@ -115,6 +97,7 @@ public class KMeans {
         System.out.println("Best sse: " + bestSSE);
         assignment = bestAssignment;
         clusters = bestClusters;
+        return true;
     }
 
     public List<Cluster> getClusters() {
@@ -154,17 +137,10 @@ public class KMeans {
             }
             System.out.println("Calculating sse...");
             double newSSE = calculateSSE();
-//            System.out.println("SSE: " + SSE + ", NEW SSE: " + newSSE + ", difference: " + (SSE - newSSE));
             if (SSE - newSSE <= PRECISION) {
                 return newSSE;
             }
             SSE = newSSE;
-
-
-//            if (Arrays.equals(assignment, prevAssignment)) {
-//                break;
-//            }
-//            prevAssignment = Arrays.copyOf(assignment, assignment.length);
         }
     }
 
@@ -184,8 +160,5 @@ public class KMeans {
     private final short[][] points; // dim 1 -- pixel idx, dim 2 -- bands
     private final double PRECISION = 0.001;
     private List<Cluster> clusters = new ArrayList<>();
-//    private final Map<Integer, Integer> distribution; // key -- pixel idx, value -- cluster idx
     private int[] assignment;
-    private int[] prevAssignment;
-    private final int iterations = 10;
 }

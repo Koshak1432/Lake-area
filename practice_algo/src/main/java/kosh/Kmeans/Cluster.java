@@ -1,7 +1,6 @@
 package kosh.Kmeans;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Cluster {
@@ -21,6 +20,6 @@ public class Cluster {
         return relatedPointsCoords;
     }
 
-    private List<Integer> relatedPointsCoords = new ArrayList<>();
+    private final List<Integer> relatedPointsCoords = new ArrayList<>();
     private final short[] bandsMeans; // центр масс
 }
