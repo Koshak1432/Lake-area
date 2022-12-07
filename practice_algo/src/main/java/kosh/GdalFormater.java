@@ -225,8 +225,6 @@ public class GdalFormater {
         return load(file);
     }
 
-
-    // todo что за файл в параметрах, ищем его же???
     /**
      * Loading file info.
      *
@@ -247,7 +245,7 @@ public class GdalFormater {
             return false;
         }
 
-        System.out.println("Loading driver: " + poDataset.GetDriver().GetDescription());
+//        System.out.println("Loading driver: " + poDataset.GetDriver().GetDescription());
 
         width = poDataset.getRasterXSize();
         height = poDataset.getRasterYSize();
@@ -362,7 +360,7 @@ public class GdalFormater {
         dat.setResolution(resolution);
         // form data applying linear transform
         convertTo256Data_PercentLinear_BlackMask(dataF, dat);
-        //convertTo256Data_PercentLinear(dataF, dat);
+//        convertTo256Data_PercentLinear(dataF, dat);
 
         poDataset.FlushCache();
 
@@ -457,7 +455,7 @@ public class GdalFormater {
     }
 
     private Data formDataWithDescription(boolean[] activeBands, int activeNumber) {
-        Data dat = new Data(width, height, activeNumber, getFileName(), numBands);
+        Data dat = new Data(width, height, activeNumber, getFileName());
         String[] bandsDesc = getBandsDescription();
         setDataBandDescription(activeBands, dat, bandsDesc);
         return dat;
@@ -494,10 +492,10 @@ public class GdalFormater {
             numCl = colorTable.GetCount();
         }
 
-        short[] band = dat.getDataPoints()[0];
+        int[] band = dat.getDataPoints()[0];
         // todo закомментил, чтобы работало, мб важная штука
-//        short[] classes = dat.classNumber;
-//        System.arraycopy(band, 0, classes, 0, band.length);
+        int[] classes = dat.getClassificationAssignment();
+        System.arraycopy(band, 0, classes, 0, band.length);
 //        dat.setNumberOfClusters(numCl);
 
         float coef = 255.f / (numCl - 1);
@@ -575,7 +573,7 @@ public class GdalFormater {
         if (dotInd > 0) {
             fileName = fileName.substring(0, dotInd);
         }
-        Data dat = new Data(1, n, activeNumber, fileName + "_part", numBands);
+        Data dat = new Data(1, n, activeNumber, fileName + "_part");
         String[] bandsDesc = getBandsDescription();
         setDataBandDescription(activeBands, dat, bandsDesc);
 
@@ -605,10 +603,12 @@ public class GdalFormater {
     public boolean saveClassification(File file, Data resultData, String driverName, String description, int[] clColors,
                                       String[] classNames) {
         if (file == null || resultData == null) {
+            System.err.println("file or data == null");
             return false;
         }
         int clNum = resultData.getNumberOfClusters();
         if ((clNum <= 0) || (clNum > 255)) {
+            System.err.println("Clusters num isn't in range, num: " + clNum);
             return false;
         }
 
@@ -616,9 +616,8 @@ public class GdalFormater {
 //            description = resultData.getAlgorithmName();
 //        }
         if (description == null) {
-            description = "GdalFormater";
+            description = "";
         }
-
         if (driverName == null) {
             driverName = "ENVI";
         }
@@ -638,24 +637,23 @@ public class GdalFormater {
             file = new File(file.getParent(), file.getName() + ".img");
         }
 
-        // TODO wtf
         // delete '-1' "noise" cluster;
-        short[] classNumber = resultData.getClassificationAssignment().clone();
+        int[] classNumber = resultData.getClassificationAssignment().clone();
+        System.out.println("Class number len: " + classNumber.length);
         //resultData.setNumberOfClusters(clNum+1);
 //        for (int i = 0; i < classNumber.length; i++) {
 //            classNumber[i]++;
 //        }
 
-
         // Form file
         Driver driver = gdal.GetDriverByName(driverName);
         Dataset resultDataset = driver.Create(file.getAbsolutePath(), w, h, 1, gdalconst.GDT_Byte);
-        resultDataset.SetDescription(description);
+//        resultDataset.SetDescription(description);
         Band clBand = resultDataset.GetRasterBand(1);
-        clBand.SetDescription(description);
+//        clBand.SetDescription(description);
 
-        // Add class names
-        Vector<String> clNames = new Vector<String>();
+        // Add class names, size: clustersNum + 1
+        Vector<String> clNames = new Vector<>();
         if ((classNames == null) || (classNames.length != clNum + 1) || (clNum != clColors.length)) {
             clNames.add("Unclassified");
             for (int i = 1; i <= clColors.length; i++) {
@@ -695,9 +693,9 @@ public class GdalFormater {
         }
 
         // Write data
-        int returnVal = 0;
+        int returnVal;
         try {
-            returnVal = resultDataset.WriteRaster(0, 0, w, h, w, h, gdalconst.GDT_Int16, classNumber, null);
+            returnVal = resultDataset.WriteRaster(0, 0, w, h, w, h, gdalconst.GDT_Int32, classNumber, null);
         } catch (Exception ex) {
             System.err.println("Could not write raster data.");
             ex.printStackTrace();
@@ -1000,8 +998,8 @@ public class GdalFormater {
         // Form max/min, (max-min) values for each band
         float[] min = new float[bandNum];
         float[] max = new float[bandNum];
-        Arrays.fill(min, 100000);
-        Arrays.fill(max, - 100000);
+        Arrays.fill(min, Float.MAX_VALUE);
+        Arrays.fill(max, Float.MIN_VALUE);
 
         int validNumber = 0;
         for (int x = 0; x < n; x++) {
@@ -1037,8 +1035,9 @@ public class GdalFormater {
         }
 
         float[] diap = max.clone();
-        for (int i = 0; i < diap.length; i++)
+        for (int i = 0; i < diap.length; i++) {
             diap[i] -= min[i];
+        }
 
         // Form approximate histogram
         int[][] hist = formApproxHistogram(dataF, histAccuracy, n, min, diap);
@@ -1047,6 +1046,7 @@ public class GdalFormater {
         changeMaxMin(threshold, histAccuracy, validNumber, min, max, diap, hist);
 
         // x' = (x-x_min)/diap*255; or 0 if diap==0 or if x is not from [min, max]
+        System.out.println("start mask thing");
         int val;
         short[][] dataPoints = dat.getDataPoints();
         for (int i = 0; i < bandNum; i++) {

@@ -85,7 +85,7 @@ public class ArgsParser {
             if ((distribution = getRGBDistribution(activeBands, sIntegersList)) != null) {
                 break;
             }
-            System.out.println("Invalid input, select bands:");
+            System.err.println("Invalid input, select bands:");
         }
         return distribution;
     }

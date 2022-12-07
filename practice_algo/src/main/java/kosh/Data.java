@@ -8,18 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Data {
-    public Data(int width, int height, int activeNumber, String fileName, int totalBandsNum) {
+    public Data(int width, int height, int activeNumber, String fileName) {
         this.width = width;
         this.height = height;
         this.activeNum = activeNumber;
         this.fileName = fileName;
-        bandsDistribution = new int[totalBandsNum];
-        Arrays.fill(bandsDistribution, -1);
-        dataPoints = new short[activeNumber][width * height];
-    }
-
-    public void setBandDistribution(int[] distribution) {
-        bandsDistribution = distribution;
+        dataPoints = new int[activeNumber][width * height];
     }
 
     public void setBandDescription(int idx, String description) {
@@ -42,15 +36,15 @@ public class Data {
     // [4, 1, 8] на входе --> [1, 0, 2]
     // 4 --> 1 (вторым обрабатывался)
     // 1 --> 0, 8 --> 2
-    public void setDistribution(BandsAsRGB generalDistr) {
-        this.distribution = Util.transformDistribution(generalDistr, bandsDistribution);
+    public void setColorDistribution(BandsAsRGB generalDistr, int[] bandsDistribution) {
+        this.colorDistribution = Util.transformDistribution(generalDistr, bandsDistribution);
     }
 
-    public short[][] getDataPoints() {
+    public int[][] getDataPoints() {
         return dataPoints;
     }
 
-    public void setClassificationAssignment(short[] classificationAssignment) {
+    public void setClassificationAssignment(int[] classificationAssignment) {
         this.classificationAssignment = classificationAssignment;
     }
 
@@ -58,7 +52,7 @@ public class Data {
         this.clusters = clusters;
     }
 
-    public short[] getClassificationAssignment() {
+    public int[] getClassificationAssignment() {
         return classificationAssignment;
     }
 
@@ -69,18 +63,14 @@ public class Data {
         return -1;
     }
 
-    public short[] getPointsRGB(String what) {
-        if (what.toLowerCase().equals("red")) {
-            return dataPoints[distribution.red()];
-        }
-        if (what.toLowerCase().equals("green")) {
-            return dataPoints[distribution.green()];
-        }
-        if (what.toLowerCase().equals("blue")) {
-            return dataPoints[distribution.blue()];
-        }
-        return null;
+    public BandsAsRGB getColorDistribution() {
+        return colorDistribution;
     }
+
+    public List<Cluster> getClusters() {
+        return clusters;
+    }
+
 
     public int getWidth() {
         return width;
@@ -95,11 +85,10 @@ public class Data {
     private final int activeNum;
     private final String fileName;
     private double resolution;
-    private BandsAsRGB distribution;
-    // [bands][width * height] со значениями в отрезке [0, 255], т.е. в первом измерении канал, а во втором значение пикселя [y * w + x]
-    private final short[][] dataPoints;
-    private short[] classificationAssignment = null;
+    private BandsAsRGB colorDistribution;
+    // [bands][width * height] со значениями в отрезке [0, 255], т.е. в первом измерении канал, а во втором значение пикселя [y * w + x] по этому каналу
+    private final int[][] dataPoints;
+    private int[] classificationAssignment = null;
     private List<Cluster> clusters = null;
     private final Map<Integer, String> bandsDescriptions = new HashMap<>();
-    private int[] bandsDistribution; // отображает номер канала(in general) в локальный номер канала, тот что в 1d dataPoints
 }
