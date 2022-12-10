@@ -3,10 +3,7 @@ package kosh;
 import kosh.Kmeans.Cluster;
 
 import java.awt.image.BufferedImage;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 public class ImageConstructor {
     public ImageConstructor(int width, int height) {
@@ -30,10 +27,12 @@ public class ImageConstructor {
         return image;
     }
 
-    public BufferedImage constructImageByClustersColors(Data data) {
+    public static BufferedImage constructImageByClustersColors(Data data) {
+        int width = data.getWidth();
+        int height = data.getHeight();
         BandsAsRGB localDistribution = data.getColorDistribution();
         List<Cluster> clusters = data.getClusters();
-        int[] assignment = data.getClassificationAssignment();
+        short[] assignment = data.getClassificationAssignment();
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
@@ -49,7 +48,7 @@ public class ImageConstructor {
 
     public static BufferedImage constructImageRandomColors(Data data) {
         int[] colors = Util.getRandomColors(data.getNumberOfClusters());
-        int[] assignment = data.getClassificationAssignment();
+        short[] assignment = data.getClassificationAssignment();
 
         int width = data.getWidth();
         int height = data.getHeight();

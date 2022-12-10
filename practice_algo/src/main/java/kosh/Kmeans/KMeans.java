@@ -7,7 +7,7 @@ public class KMeans {
         this.k = k;
         this.pixels = points[0].length;
         this.numBands = points.length;
-        this.assignment = new int[pixels];
+        this.assignment = new short[pixels];
         this.points = new short[pixels][numBands];
 
         // maybe make 1d array
@@ -25,12 +25,16 @@ public class KMeans {
     private void updateCluster(Cluster cluster) {
         int sum;
         short bandMean;
+        List<Integer> relatedPoints = cluster.getRelatedPointsCoords();
+        if (relatedPoints.size() == 0) {
+            return;
+        }
         for (int i = 0; i < numBands; ++i) {
             sum = 0;
-            for (Integer pixelIdx : cluster.getRelatedPointsCoords()) {
+            for (Integer pixelIdx : relatedPoints) {
                 sum += points[pixelIdx][i];
             }
-            bandMean = (short) (sum / cluster.getRelatedPointsCoords().size());
+            bandMean = (short) (sum / relatedPoints.size());
             cluster.getBandsMeans()[i] = bandMean;
         }
     }
@@ -79,7 +83,7 @@ public class KMeans {
         }
         double bestSSE = Double.MAX_VALUE;
         double SSE;
-        int[] bestAssignment = new int[0];
+        short[] bestAssignment = new short[0];
         List<Cluster> bestClusters = null;
 
         for (int i = 0; i < iterations; ++i) {
@@ -103,7 +107,7 @@ public class KMeans {
         return clusters;
     }
 
-    public int[] getAssignment() {
+    public short[] getAssignment() {
         return assignment;
     }
 
@@ -117,8 +121,8 @@ public class KMeans {
             clearClusters();
             for (int i = 0; i < pixels; ++i) {
                 minDistance = Double.MAX_VALUE;
-                int nearestClusterIdx = 0;
-                for (int j = 0; j < clusters.size(); ++j) {
+                short nearestClusterIdx = 0;
+                for (short j = 0; j < clusters.size(); ++j) {
                     double dist = calculateDistance(points[i], clusters.get(j).getBandsMeans());
                     if (dist < minDistance) {
                         minDistance = dist;
@@ -156,5 +160,5 @@ public class KMeans {
     private final short[][] points; // dim 1 -- pixel idx, dim 2 -- bands
     private final double PRECISION = 0.001;
     private List<Cluster> clusters = new ArrayList<>();
-    private int[] assignment;
+    private short[] assignment;
 }

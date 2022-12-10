@@ -2,7 +2,6 @@ package kosh;
 
 import kosh.Kmeans.Cluster;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,7 @@ public class Data {
         this.height = height;
         this.activeNum = activeNumber;
         this.fileName = fileName;
-        dataPoints = new int[activeNumber][width * height];
+        dataPoints = new short[activeNumber][width * height];
     }
 
     public void setBandDescription(int idx, String description) {
@@ -40,11 +39,11 @@ public class Data {
         this.colorDistribution = Util.transformDistribution(generalDistr, bandsDistribution);
     }
 
-    public int[][] getDataPoints() {
+    public short[][] getDataPoints() {
         return dataPoints;
     }
 
-    public void setClassificationAssignment(int[] classificationAssignment) {
+    public void setClassificationAssignment(short[] classificationAssignment) {
         this.classificationAssignment = classificationAssignment;
     }
 
@@ -52,7 +51,7 @@ public class Data {
         this.clusters = clusters;
     }
 
-    public int[] getClassificationAssignment() {
+    public short[] getClassificationAssignment() {
         return classificationAssignment;
     }
 
@@ -71,6 +70,23 @@ public class Data {
         return clusters;
     }
 
+    public int getNumBands() {
+        return activeNum;
+    }
+
+    public void setBandsDescriptions(String[] descriptions) {
+        for (int i = 0; i < descriptions.length; ++i) {
+            bandsDescriptions.put(i, descriptions[i]);
+        }
+    }
+
+    public void setDataPoints(short[][] dataPoints) {
+        this.dataPoints = dataPoints;
+    }
+
+    public void setActiveNum(int activeNum) {
+        this.activeNum = activeNum;
+    }
 
     public int getWidth() {
         return width;
@@ -82,13 +98,13 @@ public class Data {
 
     private final int width;
     private final int height;
-    private final int activeNum;
+    private int activeNum;
     private final String fileName;
     private double resolution;
     private BandsAsRGB colorDistribution;
     // [bands][width * height] со значениями в отрезке [0, 255], т.е. в первом измерении канал, а во втором значение пикселя [y * w + x] по этому каналу
-    private final int[][] dataPoints;
-    private int[] classificationAssignment = null;
+    private short[][] dataPoints;
+    private short[] classificationAssignment = null;
     private List<Cluster> clusters = null;
-    private final Map<Integer, String> bandsDescriptions = new HashMap<>();
+    private Map<Integer, String> bandsDescriptions = new HashMap<>();
 }

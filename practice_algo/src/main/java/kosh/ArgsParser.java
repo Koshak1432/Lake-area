@@ -5,6 +5,7 @@ import org.silentsoft.arguments.parser.Arguments;
 import org.silentsoft.arguments.parser.ArgumentsParser;
 import org.silentsoft.arguments.parser.InvalidArgumentsException;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,30 +47,38 @@ public class ArgsParser {
         return new ParsedArgs(fileName, k);
     }
 
-    public static int parseBandsToLoad(boolean[] activeBands, Scanner scanner) {
+    public static File[] getFileNames(String stringFiles) {
+        String[] strings = stringFiles.split(" ");
+        File[] files = new File[strings.length];
+        for (int i = 0; i < files.length; ++i) {
+            files[i] = new File(strings[i]);
+            System.out.println("created file " + strings[i]);
+        }
+        return files;
+    }
+
+    public static int parseBandsToLoad(boolean[] activeBands, Scanner scanner, int bands) {
         List<String> sIntegersList = new ArrayList<>();
-        int activeNum = 0;
 
         while (scanner.hasNextLine()) {
             sIntegersList.clear();
             Arrays.fill(activeBands, false);
 
             parseLineIn(sIntegersList, scanner);
-            if (sIntegersList.size() < 3) {
+            if (sIntegersList.size() < 3 && bands >= 3) {
                 System.err.println("Invalid input");
                 continue;
             }
-            activeNum = sIntegersList.size();
 
             if (fillBandsToLoad(activeBands, sIntegersList)) {
                 break;
             }
             System.out.println("Invalid input, select bands:");
         }
-        return activeNum;
+        return sIntegersList.size();
     }
 
-    public static BandsAsRGB parseBandsToShow(boolean[] activeBands, Scanner scanner) {
+    public static BandsAsRGB parseBandsToShow(boolean[] activeBands, Scanner scanner, int bands) {
         List<String> sIntegersList = new ArrayList<>();
         BandsAsRGB distribution = null;
 
@@ -77,7 +86,7 @@ public class ArgsParser {
             sIntegersList.clear();
 
             parseLineIn(sIntegersList, scanner);
-            if (sIntegersList.size() != 3) {
+            if (sIntegersList.size() != 3 && bands >= 3) {
                 System.err.println("Invalid, write 3 channels RGB");
                 continue;
             }
