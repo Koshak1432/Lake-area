@@ -6,3 +6,5 @@
 **/build/
 **/gradle/
 **/geoImages/
+**/.img
+**/.png
