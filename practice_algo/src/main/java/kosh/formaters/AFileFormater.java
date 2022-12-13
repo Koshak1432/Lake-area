@@ -1,7 +1,7 @@
 package kosh.formaters;
 
 import kosh.Data;
-import kosh.StringUtils;
+import kosh.util.StringUtils;
 
 import java.awt.Color;
 import java.io.File;

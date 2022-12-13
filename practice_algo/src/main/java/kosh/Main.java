@@ -1,8 +1,13 @@
 package kosh;
 
-import kosh.Kmeans.Cluster;
-import kosh.Kmeans.KMeans;
+import kosh.kmeans.Cluster;
+import kosh.kmeans.Kmeans;
+import kosh.display.ImageConstructor;
+import kosh.display.ImageWindow;
 import kosh.formaters.GdalFormater_M;
+import kosh.parsing.ArgsParser;
+import kosh.parsing.ParsedArgs;
+import kosh.util.Util;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -62,32 +67,6 @@ public class Main {
             }
         }
 
-        // todo
-//        if (formater.getBandsNumber() >= 3) {
-//            System.out.println("Available bands: " + Arrays.toString(formater.getBandsDescription()));
-//            System.out.println("Select bands to load:");
-//            try (Scanner scanner = new Scanner(System.in)) {
-//                // какие грузить
-//                activeNum = ArgsParser.parseBandsToLoad(activeBands, scanner, formater.getBandsNumber());
-//                System.out.println("Available bands to show: " + Arrays.toString(
-//                        ArgsParser.getAvailableBandsToShow(activeBands, activeNum)));
-//                System.out.println("Select bands to show(R G B)");
-//                //какие показывать
-//                colorsDistribution = ArgsParser.parseBandsToShow(activeBands, scanner, formater.getBandsNumber());
-//                if (colorsDistribution == null) {
-//                    System.err.println("Couldn't parse bands to show");
-//                    return;
-//                }
-//            }
-//        } else {
-//            for (int i = 0; i < formater.getColorTable().length; ++i) {
-//                activeBands[i] = true;
-//            }
-//        }
-
-        // todo delete mask
-        // many to one file landsat
-
         Data data = formater.loadData_M(activeBands);
         // отображает номер канала(in general) в локальный номер канала, тот что в 1d dataPoints
         int[] bandsDistribution = Util.getGeneralToLocalDistribution(activeBands, activeNum);
@@ -95,18 +74,18 @@ public class Main {
 
         System.out.println("Active: " + Arrays.toString(activeBands));
 
-        KMeans kmeans = new KMeans(data.getDataPoints(), k);
+        Kmeans kMeans = new Kmeans(data.getDataPoints(), k);
         int iterations = 1;
-        if (!kmeans.run(iterations)) {
+        if (!kMeans.run(iterations)) {
             System.err.println("Error while running k-means");
             return;
         }
-        short[] kmeansAssignment = kmeans.getAssignment();
-        List<Cluster> clusters = kmeans.getClusters();
+        short[] kmeansAssignment = kMeans.getAssignment();
+        List<Cluster> clusters = kMeans.getClusters();
         data.setClusters(clusters);
         data.setClassificationAssignment(kmeansAssignment);
 
-        // NDWI посчитать водный индекс посчитать
+        // NDWI посчитать водный индекс
         // 4 пункт всё суммирую и делю на количество
         BufferedImage clustersColorsClusteringImg = ImageConstructor.constructImageByClustersColors(data);
         BufferedImage beforeClusteringImg = ImageConstructor.constructImage(data);

@@ -1,6 +1,7 @@
 package kosh;
 
-import kosh.Kmeans.Cluster;
+import kosh.kmeans.Cluster;
+import kosh.util.Util;
 
 import java.util.HashMap;
 import java.util.List;

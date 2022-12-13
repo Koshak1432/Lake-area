@@ -26,9 +26,6 @@ public class GdalFormater_M extends AFileFormater {
     //   instead of implementing an interface it extends AFileFormater, which can open number of files as one data
     //   everything with linTransform and some additional methods were extracted to AFileFormater
 
-    // ��� ������������ ������������� � ������� .img ������� ������� �� �����������, ������ � �������������� xml
-    // ������������.
-
     private Dataset poDataset;
     private Hashtable props;
     private int width, height, numBands = 1;
