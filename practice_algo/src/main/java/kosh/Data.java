@@ -6,6 +6,7 @@ import kosh.util.Util;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Data {
     public Data(int width, int height, int activeNumber, String fileName) {
@@ -14,18 +15,24 @@ public class Data {
         this.activeNum = activeNumber;
         this.fileName = fileName;
         dataPoints = new short[activeNumber][width * height];
+        bandsDescriptions = new String[activeNumber];
     }
 
     public void setBandDescription(int idx, String description) {
-        bandsDescriptions.put(idx, description);
+        if (idx < 0 || idx >= bandsDescriptions.length) {
+            return;
+        }
+        bandsDescriptions[idx] = description;
     }
 
     public String getBandDescription(int band) {
-        if (bandsDescriptions.containsKey(band)) {
-            return bandsDescriptions.get(band);
+        if (band < 0 || band >= bandsDescriptions.length) {
+            return null;
         }
-        return null;
+        return bandsDescriptions[band];
     }
+
+
 
 
 
@@ -42,6 +49,19 @@ public class Data {
 
     public short[][] getDataPoints() {
         return dataPoints;
+    }
+
+    public short[] getBandByDescription(String numBand) {
+        for (int i = 0; i < bandsDescriptions.length; ++i) {
+            if (bandsDescriptions[i].contains("F" + numBand)) {
+                return dataPoints[i];
+            }
+        }
+        return null;
+    }
+
+    public void setBandsDescriptions(String[] bandsDescriptions) {
+        this.bandsDescriptions = bandsDescriptions;
     }
 
     public void setClassificationAssignment(short[] classificationAssignment) {
@@ -75,12 +95,6 @@ public class Data {
         return activeNum;
     }
 
-    public void setBandsDescriptions(String[] descriptions) {
-        for (int i = 0; i < descriptions.length; ++i) {
-            bandsDescriptions.put(i, descriptions[i]);
-        }
-    }
-
     public void setDataPoints(short[][] dataPoints) {
         this.dataPoints = dataPoints;
     }
@@ -107,5 +121,5 @@ public class Data {
     private short[][] dataPoints;
     private short[] classificationAssignment = null;
     private List<Cluster> clusters = null;
-    private Map<Integer, String> bandsDescriptions = new HashMap<>();
+    private String[] bandsDescriptions;
 }

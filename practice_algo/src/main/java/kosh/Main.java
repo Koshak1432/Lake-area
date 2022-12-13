@@ -11,9 +11,7 @@ import kosh.util.Util;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -82,12 +80,19 @@ public class Main {
         }
         short[] kmeansAssignment = kMeans.getAssignment();
         List<Cluster> clusters = kMeans.getClusters();
+
+        NDWIcalculator NDWI = new NDWIcalculator( data.getBandByDescription("3"), data.getBandByDescription("5"));
+        Set<Short> waterClasses = NDWI.getWaterClasses(clusters);
+        if (waterClasses == null) {
+            System.err.println("Couldn't calculate NDWI, load nir(5) and green(3) channels channel(5)");
+        }
+
         data.setClusters(clusters);
         data.setClassificationAssignment(kmeansAssignment);
 
         // NDWI посчитать водный индекс
         // 4 пункт всё суммирую и делю на количество
-        BufferedImage clustersColorsClusteringImg = ImageConstructor.constructImageByClustersColors(data);
+        BufferedImage clustersColorsClusteringImg = ImageConstructor.constructImageByClustersColors(data, waterClasses);
         BufferedImage beforeClusteringImg = ImageConstructor.constructImage(data);
 //        BufferedImage randomColorsImg = ImageConstructor.constructImageRandomColors(data);
 
@@ -108,5 +113,6 @@ public class Main {
                                     Util.getRandomColors(data.getNumberOfClusters()));
         System.out.println(res);
     }
+
     private static final String USAGE = "Gimme args: -f<file_to_open> -k<num_of_clusters>";
 }

@@ -180,7 +180,7 @@ public class GdalFormater_M extends AFileFormater {
         for (int i = 1; i <= numBands; i++) {
             String bandName = getProperty("Band_" + i);
             if ((bandName == null) || (bandName.length() == 0)) {
-                bandName = i + ".";
+                bandName = Integer.toString(i);
             }
             bandDesc[i - 1] = bandName;
         }

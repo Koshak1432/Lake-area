@@ -10,18 +10,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-//import sun.security.util.ArrayUtil;
-
-
-/**
- * ��������� �������� ������ ����� �� ���������� ������
- * ��� ����� ������ ����� ���������� ������� � ���������������� ����������
- * �������� ���� ������ - ������ � ������ � ���-��������� (��� ������ ������)
- * ���� �������� ���� ������ �������������, �� ��� ����� ���������, ��������� ������ ���� ����� ���������
- * ���������� ����������� ��� ��������� ���������� ��������� 256*2 ��� ������������ ����������� ������� ������
- *
- * @author Serge
- */
 public abstract class AFileFormater {
     private File[] fileList;
     private int chosenOne = 0;
@@ -30,7 +18,6 @@ public abstract class AFileFormater {
     protected float linTransformParam = 0.02f;
     private final int histAccuracy = 256 * 2;
 
-    /* ���������� ������� ��� multi-file ������, �������� ..._M */
 
     /**
      * @return number of spectral bands in all files or 0
@@ -162,13 +149,6 @@ public abstract class AFileFormater {
             bandsDescs[i] = getBandsDescription();
         }
 
-        System.out.println("BANDS DESCR: ");
-        for (int i = 0; i < bandsDescs.length; ++i) {
-            for (int j = 0; j < bandsDescs[0].length; ++j) {
-                System.out.println("Band " + (i + 1) + ": " + Arrays.toString(bandsDescs[i]));
-            }
-        }
-
         fileList = flist;
         chosenOne = chosen;
         bandsDescriptions = bandsDescs;
@@ -196,7 +176,7 @@ public abstract class AFileFormater {
         boolean[] activeBands = (_activeBands == null) ? null : _activeBands.clone();
 
         final int numF = fileList.length;
-        boolean[][] activeBandsF = transfromActiveBandsAndCheck(activeBands);
+        boolean[][] activeBandsF = transformActiveBandsAndCheck(activeBands);
         if (activeBandsF == null) {
             return null;
         }
@@ -238,7 +218,7 @@ public abstract class AFileFormater {
         }
     }
 
-    private boolean[][] transfromActiveBandsAndCheck(boolean[] activeBands) {
+    private boolean[][] transformActiveBandsAndCheck(boolean[] activeBands) {
         if (bandsDescriptions == null || fileList == null) {
             return null;
         }
@@ -284,9 +264,7 @@ public abstract class AFileFormater {
         boolean[] activeBands = (_activeBands == null) ? null : _activeBands.clone();
 
         final int numF = fileList.length;
-        System.out.println("NumF : " + numF);
-        boolean[][] activeBandsF = transfromActiveBandsAndCheck(activeBands);
-        System.out.println("transformed active bands: " + Arrays.deepToString(activeBandsF));
+        boolean[][] activeBandsF = transformActiveBandsAndCheck(activeBands);
         if (activeBandsF == null) {
             return null;
         }
@@ -344,6 +322,7 @@ public abstract class AFileFormater {
 
 
             reset();
+            dataAll.setBandsDescriptions(activeBandsDescription);
             return dataAll;
         } else {
             return loadData(activeBandsF[0]);
@@ -363,7 +342,7 @@ public abstract class AFileFormater {
         boolean[] activeBands = (_activeBands == null) ? null : _activeBands.clone();
 
         final int numF = fileList.length;
-        boolean[][] activeBandsF = transfromActiveBandsAndCheck(activeBands);
+        boolean[][] activeBandsF = transformActiveBandsAndCheck(activeBands);
         if (activeBandsF == null) {
             return null;
         }

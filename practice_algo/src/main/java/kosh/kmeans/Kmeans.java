@@ -17,6 +17,7 @@ public class Kmeans {
             }
         }
 
+        System.out.println("KMEANS:");
         System.out.println("Pixels: " + pixels);
         System.out.println("Num bands: " + numBands + ", k: " + k);
     }
