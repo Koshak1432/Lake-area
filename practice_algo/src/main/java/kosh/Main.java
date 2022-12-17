@@ -81,27 +81,50 @@ public class Main {
         short[] kmeansAssignment = kMeans.getAssignment();
         List<Cluster> clusters = kMeans.getClusters();
 
-        NDWIcalculator NDWI = new NDWIcalculator( data.getBandByDescription("3"), data.getBandByDescription("5"));
-        Set<Short> waterClasses = NDWI.getWaterClasses(clusters);
+        Set<Short> waterClasses = NDWIcalculator.getWaterClasses(clusters,
+                                                           data.getBandByDescription("3"),
+                                                             data.getBandByDescription("5"));
         if (waterClasses == null) {
-            System.err.println("Couldn't calculate NDWI, load nir(5) and green(3) channels channel(5)");
+            System.err.println("Couldn't calculate NDWI, load nir(5) and green(3) channels");
+        } else {
+            Cluster waterCl = new Cluster();
+            for (int i = 0; i < kmeansAssignment.length; ++i) {
+                if (waterClasses.contains(kmeansAssignment[i])) {
+                    waterCl.addToRelatedPoints(i);
+                    kmeansAssignment[i] = (short) clusters.size();
+                }
+            }
+            clusters.add(waterCl);
         }
+
+        // найти пиксель озера: для снимков, где озеро слева снизу x = 1100, y = 5700, т.е. idx = y * width + x
+        int x = 1100;
+        int y =5700;
+        int lakeIdx = y * data.getWidth() + x;
+        clusters.add(AreaFiller.fillArea(lakeIdx, kmeansAssignment, (short) clusters.size(), data.getWidth()));
+        // поменять класс озера на новый, при этом добавить новый класс в clusters, а к нему в relatedPoints точки???
+        // или просто в assignment писать новый класс и локально? увеличить кол-во кластеров на 1
+        // в общем, не понятно, как отображать это всё
 
         data.setClusters(clusters);
         data.setClassificationAssignment(kmeansAssignment);
 
-        // NDWI посчитать водный индекс
-        // 4 пункт всё суммирую и делю на количество
-        BufferedImage clustersColorsClusteringImg = ImageConstructor.constructImageByClustersColors(data, waterClasses);
+        int lakePixels = 0;
+        int koef = 30 * 30;
+        for (short value : kmeansAssignment) {
+            if (value == clusters.size() - 1) {
+                ++lakePixels;
+            }
+        }
+        System.out.println("lake area(meters^2): " + lakePixels * koef);
+
+        BufferedImage clustersColorsClusteringImg = ImageConstructor.constructImageByClustersColors(data, clusters.size() - 2);
         BufferedImage beforeClusteringImg = ImageConstructor.constructImage(data);
-//        BufferedImage randomColorsImg = ImageConstructor.constructImageRandomColors(data);
 
         ImageWindow beforeClustering = new ImageWindow(beforeClusteringImg);
-//        ImageWindow randomColorsClustering = new ImageWindow(randomColorsImg);
         ImageWindow meanColors = new ImageWindow(clustersColorsClusteringImg);
-        beforeClustering.displayImage("Source img");
-//        randomColorsClustering.displayImage("Clustering result");
         meanColors.displayImage("Clustering result");
+        beforeClustering.displayImage("Source img");
 
         File outFile = new File("clusteringRes.png");
         if (!Util.saveImg(outFile, clustersColorsClusteringImg)) {
@@ -111,7 +134,7 @@ public class Main {
         File classificationOut = new File("clusteringRes");
         boolean res = formater.saveClassification(classificationOut, data, "HFA", null,
                                     Util.getRandomColors(data.getNumberOfClusters()));
-        System.out.println(res);
+        System.out.println("saved classification: " + res);
     }
 
     private static final String USAGE = "Gimme args: -f<file_to_open> -k<num_of_clusters>";

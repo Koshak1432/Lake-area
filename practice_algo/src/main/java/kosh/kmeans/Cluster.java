@@ -7,6 +7,9 @@ public class Cluster {
     public Cluster(short[] point) {
         bandsMeans = point; // взял какой-то пиксель
     }
+    public Cluster() {
+
+    }
 
     public void addToRelatedPoints(int point) {
         relatedPointsCoords.add(point);
@@ -21,5 +24,5 @@ public class Cluster {
     }
 
     private final List<Integer> relatedPointsCoords = new ArrayList<>();
-    private final short[] bandsMeans; // центр масс
+    private short[] bandsMeans = new short[0]; // центр масс
 }

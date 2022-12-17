@@ -32,10 +32,6 @@ public class Data {
         return bandsDescriptions[band];
     }
 
-
-
-
-
     public void setResolution(double resolution) {
         this.resolution = resolution;
     }

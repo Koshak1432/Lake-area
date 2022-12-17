@@ -30,27 +30,35 @@ public class ImageConstructor {
         return image;
     }
 
-    public static BufferedImage constructImageByClustersColors(Data data, Set<Short> except) {
-        int width = data.getWidth();
-        int height = data.getHeight();
+    public static BufferedImage constructImageByClustersColors(Data data, int exceptCluster) {
         BandsAsRGB localDistribution = data.getColorDistribution();
         List<Cluster> clusters = data.getClusters();
         short[] assignment = data.getClassificationAssignment();
         int[] colors = new int[clusters.size()];
         for (int i = 0; i < clusters.size(); ++i) {
             short[] clusterMean = clusters.get(i).getBandsMeans();
-            colors[i] = Util.getRGBColor(clusterMean[localDistribution.red()],
-                                         clusterMean[localDistribution.green()],
-                                         clusterMean[localDistribution.blue()]);
-        }
-        if (except != null) {
-            Short[] waterClasses = except.toArray(Short[]::new);
-            for (Short waterClass : waterClasses) {
-                colors[waterClass] = Util.getRGBColor(0, 0, 255);
+            if (clusterMean.length > 0) {
+                colors[i] = Util.getRGBColor(clusterMean[localDistribution.red()],
+                                             clusterMean[localDistribution.green()],
+                                             clusterMean[localDistribution.blue()]);
             }
         }
+        if (exceptCluster >= 0) {
+            colors[exceptCluster] = Util.getRGBColor(0, 0, 255); // водные
+        }
+        colors[clusters.size() - 1] = Util.getRGBColor(255, 0, 255); // озеро
 
-        return getFilledImage(width, height, assignment, colors);
+//        if (except != null) {
+//            if (except.size() != 0) {
+//                Short[] waterClasses = except.toArray(Short[]::new);
+//
+//                for (Short waterClass : waterClasses) {
+//                    colors[waterClass] = Util.getRGBColor(0, 0, 255);
+//                }
+//            }
+//        }
+
+        return getFilledImage(data.getWidth(), data.getHeight(), assignment, colors);
     }
 
     private static BufferedImage getFilledImage(int width, int height, short[] assignment, int[] colors) {
@@ -64,7 +72,7 @@ public class ImageConstructor {
     }
 
     public static BufferedImage constructImageByClustersColors(Data data) {
-        return constructImageByClustersColors(data, null);
+        return constructImageByClustersColors(data, -1);
     }
 
 
